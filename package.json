@@ -1,0 +1,22 @@
+{
+  "name": "raspberry-pi-camera",
+  "version": "0.0.1",
+  "description": "nodejs camera application to connect to server via socket.io",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pcnate/raspberry-pi-camera.git"
+  },
+  "author": "Nathan Baker <pcnate@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pcnate/raspberry-pi-camera/issues"
+  },
+  "homepage": "https://github.com/pcnate/raspberry-pi-camera#readme",
+  "dependencies": {
+    "socket.io": "^1.4.8"
+  }
+}
