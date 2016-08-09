@@ -9,11 +9,13 @@ const serverEmitter = new ServerEmitter();
 
 const schedule = require("node-schedule");
 var j = schedule.scheduleJob('* * * * *', function() {
-  const pic = spawn('raspistill', ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg']);
+  const pic = spawn('raspistill', ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg', '--annotate', '12']);
 
   pic.on('close', ( code ) => {
     console.log('picture updated');
-  })
+    serverEmitter.emit("imageRefresh");
+  });
+
 })
 
 serverEmitter.on('startService', function( config ) {
@@ -43,6 +45,9 @@ serverEmitter.on('startService', function( config ) {
   })
 
   io.sockets.on("connection", function( socket ) {
+    serverEmitter.on("imageRefresh", function() {
+      socket.emit("imageRefresh");
+    })
   })
 
 })
