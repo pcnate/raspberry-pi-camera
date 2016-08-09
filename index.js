@@ -1,16 +1,40 @@
 const fs            = require("fs");
 const EventEmmitter = require("events");
+const spawn         = require("child_process").spawn;
 
 const configFilePath = "config.json";
 
 class ServerEmitter extends EventEmmitter {}
 const serverEmitter = new ServerEmitter();
 
+const schedule = require("node-schedule");
+var j = schedule.scheduleJob('* * * * *', function() {
+  const pic = spawn('raspistill', ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg']);
+
+  pic.on('close', ( code ) => {
+    console.log('picture updated');
+  })
+})
+
 serverEmitter.on('startService', function( config ) {
 
   console.log( config );
 
-  var io = require("socket.io").listen(8080);
+  var app = require("express")();
+  var http = require("http").Server(app);
+  var io = require("socket.io")(http);
+
+  app.get('/', function( req, res ) {
+    res.sendFile('webapp/index.html', { root: __dirname });
+  })
+
+  app.get('/current.jpg', function( req, res ) {
+    res.sendFile('/dev/shm/current.jpg');
+  })
+
+  http.listen( 3000 , function() {
+    console.log("listening on port 3000");
+  })
 
   var other_server = require("socket.io-client")( config.protocol + "://" + config.server + ":" + config.port );
 
