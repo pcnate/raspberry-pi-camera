@@ -9,10 +9,9 @@ const serverEmitter = new ServerEmitter();
 
 const schedule = require("node-schedule");
 var j = schedule.scheduleJob('* * * * *', function() {
-  const pic = spawn('raspistill', ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg', '--annotate', '12']);
+  const pic = spawn('raspistill', ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg', '--annotate', '1036', '-ae', '+25+25']);
 
   pic.on('close', ( code ) => {
-    console.log('picture updated');
     serverEmitter.emit("imageRefresh");
   });
 
