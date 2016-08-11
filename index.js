@@ -8,25 +8,42 @@ const configFilePath = "config.json";
 class ServerEmitter extends EventEmmitter {}
 const serverEmitter = new ServerEmitter();
 
-const pic = spawn('raspistill', ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg', '--annotate', '1036', '-ae', '+25+25']);
+const apikey = "2s69BQaluNX4mRX9UisKl2xb7GX2nUqXoQU0Ysl5tSfs27GuZatIUc8KQz8JA1f8tjhmvhizeVpuRHoO91GR6o2lMaRVYGnErH454ZITOPDNUIdmDKCd9U83pxuwp6kUUDqzwvLc9Vhwx0PFN5nrtvT0KUeRF97qbfXGxfSK16SUiEyHOKdBpQKESsLPGj6r3K0K2CUelFWNfSYvHCyC9b5QEQTtIlcMRunhKk7LA9rg9Q1m85AT1YRb90VEzGxd";
+
+var imageTime = new Date();
+var pic = spawn('raspistill', ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg']);
 var j = {}
 
-const apikey = "2s69BQaluNX4mRX9UisKl2xb7GX2nUqXoQU0Ysl5tSfs27GuZatIUc8KQz8JA1f8tjhmvhizeVpuRHoO91GR6o2lMaRVYGnErH454ZITOPDNUIdmDKCd9U83pxuwp6kUUDqzwvLc9Vhwx0PFN5nrtvT0KUeRF97qbfXGxfSK16SUiEyHOKdBpQKESsLPGj6r3K0K2CUelFWNfSYvHCyC9b5QEQTtIlcMRunhKk7LA9rg9Q1m85AT1YRb90VEzGxd";
-pic.on('close', function() {
+var upload = false;
+j = schedule.scheduleJob('* * * * *', function() {
+  upload = true;
+})
 
-  j = schedule.scheduleJob('* * * * *', function() {
-    const pic = spawn('raspistill', ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg', '--annotate', '1036', '-ae', '+25+25']);
+serverEmitter.on('takeImage', function() {
+  console.log('taking new image');
+  imageTime = new Date();
+  pic = spawn('raspistill', ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg']);
 
-    pic.on('close', ( code ) => {
-      serverEmitter.emit("imageRefresh");
-      const uploadImage = spawn('curl', ['-i','-F','time=""','-F','key="'+apikey+'"','-F','filedata=@/dev/shm/current.jpg','https://cam.cloud-things.com/upload/','-o','/dev/shm/cam-curl.log']);
+  pic.on('close', ( code ) => {
+    serverEmitter.emit("imageRefresh");
+
+    if( upload ) {
+      upload = false;
+      const uploadImage = spawn('curl', ['-i','-F','time='+imageTime.toString(),'-F','key='+apikey,'-F','filedata=@/dev/shm/current.jpg','https://cam.cloud-things.com/upload/','-o','/dev/shm/cam-curl.log']);
       uploadImage.on('close', function() {
-        console.log('uploading done');
+        console.log('uploading image done');
+        serverEmitter.emit('takeImage');
       })
-    });
+    } else {
+      serverEmitter.emit('takeImage');
+    }
 
-  })
+  });
 
+})
+
+pic.on('close', function() {
+  serverEmitter.emit('takeImage');
 })
 
 serverEmitter.on('startService', function( config ) {
