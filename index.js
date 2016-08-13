@@ -4,11 +4,12 @@ const spawn         = require("child_process").spawn;
 const schedule      = require("node-schedule");
 
 const configFilePath = "config.json";
+var config = {
+  deviceID: ''
+};
 
 class ServerEmitter extends EventEmmitter {}
 const serverEmitter = new ServerEmitter();
-
-const apikey = "2s69BQaluNX4mRX9UisKl2xb7GX2nUqXoQU0Ysl5tSfs27GuZatIUc8KQz8JA1f8tjhmvhizeVpuRHoO91GR6o2lMaRVYGnErH454ZITOPDNUIdmDKCd9U83pxuwp6kUUDqzwvLc9Vhwx0PFN5nrtvT0KUeRF97qbfXGxfSK16SUiEyHOKdBpQKESsLPGj6r3K0K2CUelFWNfSYvHCyC9b5QEQTtIlcMRunhKk7LA9rg9Q1m85AT1YRb90VEzGxd";
 
 var imageTime = new Date();
 var pic = spawn('raspistill', ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg']);
@@ -29,9 +30,10 @@ serverEmitter.on('takeImage', function() {
 
     if( upload ) {
       upload = false;
-      const uploadImage = spawn('curl', ['-i','-F','time='+imageTime.toString(),'-F','key='+apikey,'-F','filedata=@/dev/shm/current.jpg','https://cam.cloud-things.com/upload/','-o','/dev/shm/cam-curl.log']);
+      const uploadImage = spawn('curl', ['-i','-F','time='+imageTime.toString(),'-F','deviceID='+ config.deviceID,'-F','filedata=@/dev/shm/current.jpg','https://cam.cloud-things.com/upload/','-o','/dev/shm/cam-curl.log']);
       uploadImage.on('close', function() {
         console.log('uploading image done');
+        serverEmitter.emit('imageUploaded');
         serverEmitter.emit('takeImage');
       })
     } else {
@@ -46,17 +48,20 @@ pic.on('close', function() {
   serverEmitter.emit('takeImage');
 })
 
-serverEmitter.on('startService', function( config ) {
+serverEmitter.on('startService', function() {
 
   console.log( config );
 
-  var app = require("express")();
+  var express = require("express");
+  var app = express();
   var http = require("http").Server(app);
   var io = require("socket.io")(http);
 
   app.get('/', function( req, res ) {
     res.sendFile('webapp/index.html', { root: __dirname });
   })
+
+  app.use('/images', express.static( __dirname + '/webapp/images' ) );
 
   app.get('/current.jpg', function( req, res ) {
     res.sendFile('/dev/shm/current.jpg');
@@ -66,10 +71,16 @@ serverEmitter.on('startService', function( config ) {
     console.log("listening on port 3000");
   })
 
-  var other_server = require("socket.io-client")( config.protocol + "://" + config.server + ":" + config.port );
+  var client = require("socket.io-client")( config.protocol + "://" + config.server + ":" + config.port );
 
-  other_server.on("connect", function() {
+  client.on("connect", function() {
     console.log('connected to other server');
+    serverEmitter.on("imageUploaded", function() {
+      client.emit("imageRefresh");
+    })
+    client.on("disconnect", function() {
+      console.log('disconnected from server');
+    })
   })
 
   io.sockets.on("connection", function( socket ) {
@@ -90,9 +101,9 @@ if( !fs.existsSync("config.json") ) {
   require("process").exit();
 } else {
 
-  let config = fs.readFileSync( configFilePath );
-  config = JSON.parse( config );
+  let configJSON = fs.readFileSync( configFilePath );
+  config = JSON.parse( configJSON );
 
-  serverEmitter.emit('startService', config );
+  serverEmitter.emit('startService' );
 
 }
