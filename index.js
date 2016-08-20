@@ -11,60 +11,88 @@ var config = {
 class ServerEmitter extends EventEmmitter {}
 const serverEmitter = new ServerEmitter();
 
-var imageTime = new Date();
-var pic = spawn('raspistill', ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg']);
-var j = {}
 
 var upload = false;
-j = schedule.scheduleJob('* * * * *', function() {
+var j = schedule.scheduleJob('* * * * *', function() {
   upload = true;
 })
 
-serverEmitter.on('takeImage', function() {
+var image = '';
+
+var imageTime = new Date();
+
+var count = 0;
+var tempImage = '';
+var args = ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg', '-t', '999999999', '-tl', '10000', '-v'];
+// var args = ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg', '-t', '999999999', '-tl', '10000', '-v', '--annotate', '12'];
+var pic = spawn('raspistill', args);
+
+pic.stdout.on('data', (data) => {
+  console.log( 'stdout: ', data );
+});
+
+pic.on('close', (code) => {
+  console.log( 'raspistill ended with code:', code );
+})
+
+fs.watchFile('/dev/shm/current.jpg', function( current, previous ) {
   console.log('taking new image');
   imageTime = new Date();
-  pic = spawn('raspistill', ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg']);
-
-  pic.on('close', ( code ) => {
-    serverEmitter.emit("imageRefresh");
+  fs.readFile('/dev/shm/current.jpg', function( err, data ) {
+    image = data;
 
     if( upload ) {
+
       upload = false;
-      const uploadImage = spawn('curl', ['-i','-F','time='+imageTime.toString(),'-F','deviceID='+ config.deviceID,'-F','filedata=@/dev/shm/current.jpg','https://cam.cloud-things.com/upload/','-o','/dev/shm/cam-curl.log']);
-      uploadImage.on('close', function() {
-        console.log('uploading image done');
-        serverEmitter.emit('imageUploaded');
-        serverEmitter.emit('takeImage');
+      console.log('uploading new image');
+
+      tempImage = image;
+
+      fs.writeFile('/dev/shm/upload.jpg', image, function() {
+        var uploadImage = spawn('curl', ['-i','-F','time='+imageTime.toString(),'-F','deviceID='+ config.deviceID,'-F','filedata=@/dev/shm/upload.jpg','https://cam.cloud-things.com/upload/','-o','/dev/shm/cam-curl.log']);
+        uploadImage.on('close', function() {
+          console.log('uploading new image done');
+          serverEmitter.emit('imageUploaded');
+        })
       })
-    } else {
-      serverEmitter.emit('takeImage');
+
     }
-
-  });
-
+    serverEmitter.emit('imageRefresh');
+  })
 })
 
-pic.on('close', function() {
-  serverEmitter.emit('takeImage');
-})
 
 serverEmitter.on('startService', function() {
 
   console.log( config );
 
+  // setup the server
   var express = require("express");
   var app = express();
   var http = require("http").Server(app);
   var io = require("socket.io")(http);
 
+  // root index
   app.get('/', function( req, res ) {
     res.sendFile('webapp/index.html', { root: __dirname });
   })
 
+  // static image files
   app.use('/images', express.static( __dirname + '/webapp/images' ) );
 
+  // image is loaded from memory
   app.get('/current.jpg', function( req, res ) {
-    res.sendFile('/dev/shm/current.jpg');
+
+    if( image && image.length > 0 ) {
+      res.writeHead( 200, { 'Content-Type': 'image/jpeg' } );
+      res.write( image );
+      res.end();
+    } else {
+      res.writeHead( 400, { 'Content-Type': 'text/plain' } );
+      res.write( 'No image available' );
+      res.end();
+    }
+
   })
 
   http.listen( 3000 , function() {
@@ -73,6 +101,7 @@ serverEmitter.on('startService', function() {
 
   var client = require("socket.io-client")( config.protocol + "://" + config.server + ":" + config.port );
 
+  // TODO need to detect current connection
   client.on("connect", function() {
     console.log('connected to other server');
     serverEmitter.on("imageUploaded", function() {
@@ -83,8 +112,11 @@ serverEmitter.on('startService', function() {
     })
   })
 
+  //
   io.sockets.on("connection", function( socket ) {
+    console.log('client connected');
     serverEmitter.on("imageRefresh", function() {
+      console.log('telling client to load new image');
       socket.emit("imageRefresh");
     })
   })
