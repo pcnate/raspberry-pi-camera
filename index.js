@@ -17,47 +17,72 @@ var j = schedule.scheduleJob('* * * * *', function() {
   upload = true;
 })
 
+var delay = 10;
+
 var image = '';
+var uploadImage = '';
 
-var imageTime = new Date();
+var dt = new Date();
+var secInterval = setInterval(function() {
+  dt = new Date();
+  if( dt.getSeconds() % delay == 0 ) {
+    clearInterval( secInterval );
+    serverEmitter.emit('startCamera');
+  } else {
+    console.log( delay - (dt.getSeconds() % delay) );
+  }
+},1000);
 
-var count = 0;
-var tempImage = '';
-var args = ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg', '-t', '999999999', '-tl', '10000', '-v'];
-// var args = ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg', '-t', '999999999', '-tl', '10000', '-v', '--annotate', '12'];
-var pic = spawn('raspistill', args);
+serverEmitter.on('startCamera', function() {
+  var imageTime = new Date();
+  // var args = ['-vf', '-hf', '-w', '1920', '-h', '1080', '-o', '/dev/shm/current.jpg', '-t', '999999999', '-tl', '10000', '-v'];
+  var args = [
+    // '-v',
+    '-vf',
+    '-hf',
+    '-w', '1920',
+    '-h', '1080',
+    '-o', '/dev/shm/current.jpg',
+    '-t', '999999999',
+    '-tl', delay*1000,
+    '-a', 4+8,
+    // '-a', 'test',
+  ];
+  var pic = spawn('raspistill', args);
 
-pic.stdout.on('data', (data) => {
-  console.log( 'stdout: ', data );
-});
+  pic.stdout.on('data', (data) => {
+    console.log( 'stdout: ', data );
+  });
 
-pic.on('close', (code) => {
-  console.log( 'raspistill ended with code:', code );
-})
+  pic.on('close', (code) => {
+    console.log( 'raspistill ended with code:', code );
+  })
 
-fs.watchFile('/dev/shm/current.jpg', function( current, previous ) {
-  console.log('taking new image');
-  imageTime = new Date();
-  fs.readFile('/dev/shm/current.jpg', function( err, data ) {
-    image = data;
+  fs.watchFile('/dev/shm/current.jpg', function( current, previous ) {
+    console.log('taking new image');
+    imageTime = new Date();
+    fs.readFile('/dev/shm/current.jpg', function( err, data ) {
+      image = data;
 
-    if( upload ) {
+      if( upload ) {
 
-      upload = false;
-      console.log('uploading new image');
+        upload = false;
+        console.log('uploading new image');
 
-      tempImage = image;
+        uploadImage = image;
+        serverEmitter.emit('startImageUpload');
 
-      fs.writeFile('/dev/shm/upload.jpg', image, function() {
-        var uploadImage = spawn('curl', ['-i','-F','time='+imageTime.toString(),'-F','deviceID='+ config.deviceID,'-F','filedata=@/dev/shm/upload.jpg','https://cam.cloud-things.com/upload/','-o','/dev/shm/cam-curl.log']);
-        uploadImage.on('close', function() {
-          console.log('uploading new image done');
-          serverEmitter.emit('imageUploaded');
+        fs.writeFile('/dev/shm/upload.jpg', image, function() {
+          var uploadImage = spawn('curl', ['-i','-F','time='+imageTime.toString(),'-F','deviceID='+ config.deviceID,'-F','filedata=@/dev/shm/upload.jpg','https://cam.cloud-things.com/upload/','-o','/dev/shm/cam-curl.log']);
+          uploadImage.on('close', function() {
+            console.log('uploading new image done');
+            serverEmitter.emit('imageUploaded');
+          })
         })
-      })
 
-    }
-    serverEmitter.emit('imageRefresh');
+      }
+      serverEmitter.emit('imageRefresh');
+    })
   })
 })
 
@@ -103,13 +128,21 @@ serverEmitter.on('startService', function() {
 
   // TODO need to detect current connection
   client.on("connect", function() {
+
     console.log('connected to other server');
+
+    serverEmitter.on("startImageUpload", function() {
+      client.emit("")
+    })
+
     serverEmitter.on("imageUploaded", function() {
       client.emit("imageRefresh");
     })
+
     client.on("disconnect", function() {
       console.log('disconnected from server');
     })
+
   })
 
   //
