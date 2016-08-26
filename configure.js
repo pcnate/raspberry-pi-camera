@@ -15,6 +15,10 @@ const promptEmitter = new PromptEmitter();
 // default values
 var schema = {
   properties: {
+    upload: {
+      'default': 'y',
+      'require': true
+    },
     protocol: {
       'default': 'https',
       'require': true

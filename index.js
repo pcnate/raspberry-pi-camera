@@ -73,11 +73,13 @@ serverEmitter.on('startCamera', function() {
         serverEmitter.emit('startImageUpload');
 
         fs.writeFile('/dev/shm/upload.jpg', image, function() {
-          var uploadImage = spawn('curl', ['-i','-F','time='+imageTime.toString(),'-F','deviceID='+ config.deviceID,'-F','filedata=@/dev/shm/upload.jpg','https://cam.cloud-things.com/upload/','-o','/dev/shm/cam-curl.log']);
-          uploadImage.on('close', function() {
-            console.log('uploading new image done');
-            serverEmitter.emit('imageUploaded');
-          })
+          if( config.upload == 'y' ) {
+            var uploadImage = spawn('curl', ['-i','-F','time='+imageTime.toString(),'-F','deviceID='+ config.deviceID,'-F','filedata=@/dev/shm/upload.jpg','https://cam.cloud-things.com/upload/','-o','/dev/shm/cam-curl.log']);
+            uploadImage.on('close', function() {
+              console.log('uploading new image done');
+              serverEmitter.emit('imageUploaded');
+            })
+          }
         })
 
       }
