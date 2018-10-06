@@ -55,25 +55,31 @@ serverEmitter.on('startCamera', () => {
     console.log( 'raspistill ended with code:', code );
   })
 
-  // watch for changes on the file and upload them to the server
-  fs.watchFile('/dev/shm/current.jpg', ( current, previous ) => {
+  // create the file first
+  fs.writeFile( '/dev/shm/current.jpg', '', ( error, data ) => {
 
-    console.log('taking new image');
-    unixTimestamp = Math.round( ( new Date() ).getTime() / 1000 );
+    // watch for changes on the file and upload them to the server
+    fs.watchFile('/dev/shm/current.jpg', (current, previous) => {
 
-    console.log('uploading new image');
+      console.log('taking new image');
+      unixTimestamp = Math.round((new Date()).getTime() / 1000);
 
-    var form = new FormData();
+      console.log('uploading new image');
 
-    form.append( 'filedata', fs.createReadStream( '/dev/shm/current.jpg' ) );
+      var form = new FormData();
 
-    let uploadPath = config.baseUploadUrl + '/' + unixTimestamp;
+      form.append('filedata', fs.createReadStream('/dev/shm/current.jpg'));
 
-    form.submit( uploadPath, ( error, response ) => {
-      console.log( 'done uploading' );
-    } )
+      let uploadPath = config.baseUploadUrl + '/' + unixTimestamp;
 
-  })
+      form.submit(uploadPath, (error, response) => {
+        console.log('done uploading');
+      })
+
+    })
+
+  });
+
 })
 
 
@@ -93,3 +99,4 @@ if( !fs.existsSync('config.json') ) {
   config.baseUploadUrl = config.protocol + '://' + config.server + ( config.port === '' ? '' : ':' + config.port ) + '/upload/' + config.deviceID;
 
 }
+
