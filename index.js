@@ -13,7 +13,7 @@ var config = {
 class ServerEmitter extends EventEmmitter {}
 const serverEmitter = new ServerEmitter();
 
-var delay = 10;
+var delay = 5;
 
 var image = '';
 var uploadImage = '';
