@@ -72,9 +72,14 @@ serverEmitter.on('startCamera', () => {
 
       let uploadPath = config.baseUploadUrl + '/' + unixTimestamp;
 
-      form.submit(uploadPath, (error, response) => {
-        console.log('done uploading\r\n');
-      })
+      try {
+        form.submit(uploadPath, (error, response) => {
+          console.log('done uploading\r\n');
+        });
+
+      } catch( e ) {
+        console.error( 'error submitting form', e );
+      }
 
     })
 
