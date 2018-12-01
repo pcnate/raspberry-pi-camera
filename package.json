@@ -22,5 +22,8 @@
     "node-uuid": "^1.4.7",
     "path": "^0.12.7",
     "prompt": "^1.0.0"
+  },
+  "devDependencies": {
+    "npm-nomaster-commits": "^1.0.5"
   }
 }
