@@ -6,6 +6,7 @@ const fs            = require("fs-extra");
 const fso           = require("fs");
 const spawn         = require("child_process").spawn;
 const FormData      = require('form-data');
+const sleep         = require('await-sleep');
 
 dotenv.config({
   path: paths.configFilePath
@@ -18,15 +19,8 @@ if ( typeof process.env.deviceID === 'undefined' ) {
   console.log( 'starting camera', process.env.deviceID );
 }
 
-// create the file first
-fs.exists( process.env.imageFilePath, async ( exists ) => {
-  if( !exists ) {
-    console.log( 'image didt exist yet, creating...' );
-    await fs.writeFile( process.env.imageFilePath, '' );
-  }
-});
-
 var pic = null;
+var fileWatch = null;
 var delay = process.env.cameraDelay || 5;
 
 var dt = new Date();
@@ -71,22 +65,43 @@ async function startCamera() {
   }
 }
 
+/**
+ * asynchronously wait for the file to exist
+ * 
+ * @param {string} file path to file
+ */
+async function waitForFile( file ) {
+  while( true ) {
+    const exists = await fs.exists( file );
+    if( exists ) return true;
+    console.log( 'file does not yet exist, waiting longer' );
+    await sleep( 333 );
+  }
+}
+
 // watch for changes on the file and upload them to the server
 // using native fs for now, switching to something better later
-var fileWatch = fso.watch( process.env.imageFilePath, async() => {
+( async() => {
 
-  unixTimestamp = Math.round( ( new Date() ).getTime() / 1000 );
+  // wait for file to be created
+  await waitForFile( process.env.imageFilePath );
 
-  var form = new FormData();
-  form.append( 'filedata', fs.createReadStream( process.env.imageFilePath ) );
-  
-  const uploadPath = process.env.uploadURL + [ '/upload', process.env.deviceID, unixTimestamp ].join('/');
+  // watch the file
+  fileWatch = fso.watch( process.env.imageFilePath, async() => {
 
-  await form.submit( uploadPath, err => {
-    if ( err ) console.error( 'error submitting form', err );
+    unixTimestamp = Math.round( ( new Date() ).getTime() / 1000 );
+
+    var form = new FormData();
+    form.append( 'filedata', fs.createReadStream( process.env.imageFilePath ) );
+    
+    const uploadPath = process.env.uploadURL + [ '/upload', process.env.deviceID, unixTimestamp ].join('/');
+
+    await form.submit( uploadPath, err => {
+      if ( err ) console.error( 'error submitting form', err );
+    });
+
   });
-
-});
+})();
 
 /**
  * gracefully shut the application down
