@@ -1,20 +1,18 @@
 #!/usr/bin/env node
 
-const dotenv    = require('dotenv');
-const paths     = require('./paths');
-const fs        = require("fs-extra");
-const util      = require("util");
-const ini       = require("ini");
-const prompt    = require("prompt");
-const promptGet = util.promisify( prompt.get );
-const uuidv5    = require("uuid/v5");
+const dotenv    = require('dotenv'),
+      paths     = require('./paths'),
+      fs        = require("fs-extra"),
+      util      = require("util"),
+      ini       = require("ini"),
+      prompt    = require("prompt"),
+      promptGet = util.promisify( prompt.get ),
+      uuidv5    = require("uuid/v5"),
+      schema    = require('./schema');
 
 dotenv.config({
   path: paths.configFilePath
 });
-
-// default values
-var schema = require('./schema');
 
 ( async() => {
 
@@ -35,7 +33,7 @@ var schema = require('./schema');
   const result = await promptGet( schema );
 
   // generate a new GUID if none is specified
-  result.deviceID = result.deviceID == schema.GEN_ID ? result.deviceID = uuidv5( result.uploadURL, uuidv5.URL ) : result.deviceID;
+  result.deviceID = result.deviceID == schema.GEN_ID ? uuidv5( result.uploadURL, uuidv5.URL ) : result.deviceID;
 
   // save the file
   await fs.writeFile( paths.configFilePath, ini.stringify( result ) );
