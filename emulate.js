@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const dotenv = require('dotenv');
 const paths = require('./paths');
 const path = require('path');

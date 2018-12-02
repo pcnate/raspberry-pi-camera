@@ -8,6 +8,10 @@
     "configure": "node configure.js",
     "postinstall": "node configure.js"
   },
+  "bin": {
+    "raspberry-pi-camera": "./server",
+    "raspberry-pi-camera-config": "./configure"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pcnate/raspberry-pi-camera.git"
