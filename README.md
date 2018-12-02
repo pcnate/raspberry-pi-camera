@@ -1,38 +1,18 @@
 # raspberry-pi-camera
-nodejs camera application to connect to server via socket.io
+nodejs camera application to upload images to server
 
 Server software https://github.com/pcnate/raspberry-pi-camera-server
 
-# basic setup on raspberry pi
+# Standalone Install
 
-    curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
-    sudo apt-get install -y nodejs build-essential
-    
-    git clone https://github.com/pcnate/raspberry-pi-camera.git
+1) setup a server
+2) `npm install -g @pcnate/raspberry-pi-camera`
+3) enter url to upload to
+4) leave GUID blank
+5) leave image path alone, (stores in RAM to save SD card)
 
-    npm update
-    npm install
-    
-    node configure.js
+# Automatic startup with pm2
 
-
-# Installing nodejs
-
-```
--#! /bin/bash
--
--# source: https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions
--
--curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
--sudo apt-get install -y nodejs build-essential
--
--
--node -v
--npm -v
--
--npm cache clean -f
--npm install -g n
--sudo n stable
--
--echo 'now exit and reconnect and run node -v && npm -v'
-```
+1) `npm install -g pm2`
+2) `pm2 startup`
+3) `pm2 install @pcnate/raspberry-pi-camera`
