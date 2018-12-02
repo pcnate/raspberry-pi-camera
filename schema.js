@@ -3,24 +3,16 @@ const GEN_ID = "Generate new ID";
 module.exports = {
   GEN_ID,
   properties: {
-    upload: {
-      'default': 'y',
-      'require': true
-    },
-    protocol: {
-      'default': 'https',
-      'require': true
-    },
-    server: {
-      'default': 'example.com',
-      'required': true
-    },
-    port: {
-      'default': 3000,
+    uploadURL: {
+      'default': 'https://example.com',
       'required': true
     },
     deviceID: {
       'default': GEN_ID,
+      'required': true
+    },
+    imageFilePath: {
+      'default': '/dev/shm/current.jpg',
       'required': true
     }
   }
