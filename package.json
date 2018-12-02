@@ -1,12 +1,16 @@
 {
-  "name": "raspberry-pi-camera",
-  "version": "0.0.1",
+  "name": "@pcnate/raspberry-pi-camera",
+  "version": "0.0.3",
   "description": "nodejs camera application to connect to server via socket.io",
   "main": "server.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon emulate.js",
     "configure": "node configure.js",
     "postinstall": "node configure.js"
+  },
+  "bin": {
+    "raspberry-pi-camera": "./server",
+    "raspberry-pi-camera-config": "./configure"
   },
   "repository": {
     "type": "git",
