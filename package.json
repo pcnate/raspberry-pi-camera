@@ -4,8 +4,7 @@
   "description": "nodejs camera application to connect to server via socket.io",
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon emulate.js",
-    "configure": "node configure.js",
-    "postinstall": "node configure.js"
+    "configure": "node configure.js"
   },
   "bin": {
     "raspberry-pi-camera": "./server.js",

@@ -26,7 +26,8 @@ fs.exists( process.env.imageFilePath, async ( exists ) => {
   }
 });
 
-var delay = 5;
+var pic = null;
+var delay = process.env.cameraDelay || 5;
 
 var dt = new Date();
 var secInterval = setInterval( () => {
@@ -58,7 +59,7 @@ async function startCamera() {
       '-a', 4+8,
       // '-a', 'test',
     ];
-    var pic = spawn('raspistill', args);
+    pic = spawn('raspistill', args);
 
     pic.stdout.on('data', (data) => {
       console.log( 'stdout: ', data );
@@ -72,7 +73,7 @@ async function startCamera() {
 
 // watch for changes on the file and upload them to the server
 // using native fs for now, switching to something better later
-fso.watchFile( process.env.imageFilePath, async() => {
+var fileWatch = fso.watch( process.env.imageFilePath, async() => {
 
   unixTimestamp = Math.round( ( new Date() ).getTime() / 1000 );
 
@@ -86,3 +87,34 @@ fso.watchFile( process.env.imageFilePath, async() => {
   });
 
 });
+
+/**
+ * gracefully shut the application down
+ */
+async function shutdown() {
+  console.info( 'shutting down...' );
+  // stop raspistill if it running
+  if( pic !== null ) {
+    console.info( 'stopping raspistill...' );
+    pic.kill('SIGINT');
+  }
+  if( fileWatch !== null ) {
+    console.info( 'removing file watch...' );
+    fileWatch.close();
+  }
+  console.info( 'done...' );
+  process.exit(0);
+}
+
+// listen for SIGINT and clean up
+process.on('SIGINT', async () => {
+  console.info( '\r\n\r\n', 'SIGINT signal recieved' );
+  shutdown();
+});
+
+// windows
+process.on('message', (msg) => {
+  if (msg == 'shutdown') {
+    shutdown();
+  }
+})
