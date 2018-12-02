@@ -5,7 +5,7 @@ const util      = require("util");
 const ini       = require("ini");
 const prompt    = require("prompt");
 const promptGet = util.promisify( prompt.get );
-const uuid      = require("node-uuid");
+const uuidv5    = require("uuid/v5");
 
 dotenv.config({
   path: paths.configFilePath
@@ -33,7 +33,7 @@ var schema = require('./schema');
   const result = await promptGet( schema );
 
   // generate a new GUID if none is specified
-  result.deviceID = result.deviceID == schema.GEN_ID ? result.deviceID = uuid.v4() : result.deviceID;
+  result.deviceID = result.deviceID == schema.GEN_ID ? result.deviceID = uuidv5( result.uploadURL, uuidv5.URL ) : result.deviceID;
 
   // save the file
   await fs.writeFile( paths.configFilePath, ini.stringify( result ) );
