@@ -1,95 +1,42 @@
-/**
- *
- */
-const fs            = require("fs");
-const prompt        = require("prompt");
-const EventEmmitter = require("events");
-const uuid          = require("node-uuid");
+const dotenv    = require('dotenv');
+const paths     = require('./paths');
+const fs        = require("fs-extra");
+const util      = require("util");
+const ini       = require("ini");
+const prompt    = require("prompt");
+const promptGet = util.promisify( prompt.get );
+const uuidv5    = require("uuid/v5");
 
-const configFilePath = "config.json";
-const GEN_ID = "Generate new ID";
-
-class PromptEmitter extends EventEmmitter {}
-const promptEmitter = new PromptEmitter();
+dotenv.config({
+  path: paths.configFilePath
+});
 
 // default values
-var schema = {
-  properties: {
-    upload: {
-      'default': 'y',
-      'require': true
-    },
-    protocol: {
-      'default': 'https',
-      'require': true
-    },
-    server: {
-      'default': 'example.com',
-      'required': true
-    },
-    port: {
-      'default': 3000,
-      'required': true
-    },
-    deviceID: {
-      'default': GEN_ID,
-      'required': true
+var schema = require('./schema');
+
+( async() => {
+
+  for ( const key in schema.properties ) {
+    if ( typeof process.env[key] !== 'undefined' ) {
+      schema.properties[key].default = process.env[key];
     }
   }
-};
+  
+  // make sure the config directiory exists
+  await fs.ensureDir( paths.configFolder );
 
-//
-// Start the prompt
-//
-promptEmitter.on('readConfigFile', function() {
-
-  let config = fs.readFileSync( configFilePath );
-  config = JSON.parse( config );
-
-  for( const key in config ) {
-    if( typeof schema.properties[key] === 'undefined' ) {
-      schema.properties[key] = {};
-    }
-    schema.properties[key].default = config[key];
-
-  }
-
-  promptEmitter.emit('startPrompt');
-
-});
-
-//
-// Start the prompt
-//
-promptEmitter.on('startPrompt', function() {
-
+  // Start the prompt
+  console.log("\r\nGenerating new configuration:\r\n");
   prompt.start();
 
-  //
-  // Get two properties from the user: username and email
-  //
-  prompt.get( schema, function( err, result ) {
+  // prompt for the 
+  const result = await promptGet( schema );
 
-    if( result.deviceID == GEN_ID ) {
-      result.deviceID = uuid.v4();
-    }
+  // generate a new GUID if none is specified
+  result.deviceID = result.deviceID == schema.GEN_ID ? result.deviceID = uuidv5( result.uploadURL, uuidv5.URL ) : result.deviceID;
 
-    let config = JSON.stringify( result, null, "  " );
+  // save the file
+  await fs.writeFile( paths.configFilePath, ini.stringify( result ) );
+  console.log("\r\nConfiguration saved\r\n");
 
-    fs.writeFileSync( configFilePath, config );
-    console.log("\r\nConfig saved\r\n");
-
-  });
-
-});
-
-/**
- *  exit the application if no configuration file is found
- */
-if( fs.existsSync( configFilePath ) ) {
-  console.log("\r\nLoading existing configuration:\r\n");
-  promptEmitter.emit('readConfigFile');
-} else {
-  console.log("\r\nGenerating new configuration:\r\n");
-  promptEmitter.emit('startPrompt');
-}
+} )();
