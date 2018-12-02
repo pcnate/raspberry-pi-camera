@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const dotenv        = require('dotenv');
+const path          = require('path');
 const paths         = require('./paths');
 const fs            = require("fs-extra");
 const fso           = require("fs");
@@ -87,18 +88,26 @@ async function waitForFile( file ) {
   await waitForFile( process.env.imageFilePath );
 
   // watch the file
-  fileWatch = fso.watch( process.env.imageFilePath, async() => {
+  fileWatch = fso.watch( path.dirname( process.env.imageFilePath ), async( event, changed_fname ) => {
+
+    if( event !== 'change' ) {
+      return;
+    }
 
     unixTimestamp = Math.round( ( new Date() ).getTime() / 1000 );
 
-    var form = new FormData();
-    form.append( 'filedata', fs.createReadStream( process.env.imageFilePath ) );
-    
-    const uploadPath = process.env.uploadURL + [ '/upload', process.env.deviceID, unixTimestamp ].join('/');
+    try {
+      var form = new FormData();
+      form.append( 'filedata', fs.createReadStream( process.env.imageFilePath ) );
+      
+      const uploadPath = process.env.uploadURL + [ '/upload', process.env.deviceID, unixTimestamp ].join('/');
 
-    await form.submit( uploadPath, err => {
-      if ( err ) console.error( 'error submitting form', err );
-    });
+      await form.submit( uploadPath, err => {
+        if ( err ) console.error( 'error submitting form', err );
+      });
+    } catch( error ) {
+      console.error( 'error trying to read the image and upload it', error );
+    }
 
   });
 })();
