@@ -4,7 +4,9 @@
   "description": "nodejs camera application to connect to server via socket.io",
   "main": "server.js",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development nodemon emulate.js"
+    "dev": "cross-env NODE_ENV=development nodemon emulate.js",
+    "configure": "node configure.js",
+    "postinstall": "node configure.js"
   },
   "repository": {
     "type": "git",
