@@ -1,6 +1,6 @@
 {
   "name": "raspberry-pi-camera",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "nodejs camera application to connect to server via socket.io",
   "main": "server.js",
   "scripts": {
