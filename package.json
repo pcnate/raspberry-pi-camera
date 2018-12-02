@@ -9,8 +9,8 @@
     "postinstall": "node configure.js"
   },
   "bin": {
-    "raspberry-pi-camera": "./server",
-    "raspberry-pi-camera-config": "./configure"
+    "raspberry-pi-camera": "./server.js",
+    "raspberry-pi-camera-config": "./configure.js"
   },
   "repository": {
     "type": "git",
