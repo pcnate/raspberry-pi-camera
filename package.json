@@ -1,11 +1,10 @@
 {
   "name": "@pcnate/raspberry-pi-camera",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "nodejs camera application to connect to server via socket.io",
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon emulate.js",
-    "configure": "node configure.js",
-    "postinstall": "node configure.js"
+    "configure": "node configure.js"
   },
   "bin": {
     "raspberry-pi-camera": "./server.js",
@@ -22,6 +21,7 @@
   },
   "homepage": "https://github.com/pcnate/raspberry-pi-camera#readme",
   "dependencies": {
+    "await-sleep": "0.0.1",
     "dotenv": "^6.1.0",
     "form-data": "^2.3.2",
     "fs-extra": "^7.0.1",
