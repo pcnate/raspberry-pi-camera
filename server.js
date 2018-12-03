@@ -89,11 +89,15 @@ async function waitForFile( file ) {
   await waitForFile( process.env.imageFilePath );
 
   // watch the file
-  fileWatch = chokidar.watch( process.env.imageFilePath, {
+  fileWatch = chokidar.watch( path.dirname( process.env.imageFilePath ), {
     persistent: true,
   });
     
   fileWatch.on( 'change', async( path, stats ) => {
+
+    if( path !== process.env.imageFilePath ) {
+      return;
+    }
 
     if( uploadingLock ) {
       console.error( 'uploading is still locked');
