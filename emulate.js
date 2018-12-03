@@ -5,6 +5,7 @@ const paths = require('./paths');
 const path = require('path');
 const fs = require('fs-extra');
 const fork = require('child_process').fork;
+const sensor = require('ds18b20-raspi');
 
 dotenv.config({
   path: paths.configFilePath
@@ -22,6 +23,7 @@ function copyImage() {
     if( err ) console.error( 'error copying image', err );
   });
   imageIndex = imageIndex === 10 ? 1 : imageIndex + 1;
+  getTemp();
 }
 
 /**
@@ -41,3 +43,8 @@ workerProcess.on( 'close', code => {
   clearInterval( timer );
   process.exit(1);
 });
+
+async function getTemp() {
+  const temps = sensor.readAllF();
+  console.log( temps, new Date().toISOString() );
+}
