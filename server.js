@@ -4,7 +4,7 @@ const dotenv        = require('dotenv');
 const path          = require('path');
 const paths         = require('./paths');
 const fs            = require("fs-extra");
-const fso           = require("fs");
+const chokidar      = require("chokidar");
 const spawn         = require("child_process").spawn;
 const FormData      = require('form-data');
 const sleep         = require('await-sleep');
@@ -22,6 +22,7 @@ if ( typeof process.env.deviceID === 'undefined' ) {
 
 var pic = null;
 var fileWatch = null;
+var uploadingLock = false;
 var delay = process.env.cameraDelay || 5;
 
 var dt = new Date();
@@ -75,7 +76,6 @@ async function waitForFile( file ) {
   while( true ) {
     const exists = await fs.exists( file );
     if( exists ) return true;
-    console.log( 'file does not yet exist, waiting longer' );
     await sleep( 333 );
   }
 }
@@ -88,11 +88,22 @@ async function waitForFile( file ) {
   await waitForFile( process.env.imageFilePath );
 
   // watch the file
-  fileWatch = fso.watch( path.dirname( process.env.imageFilePath ), async( event, changed_fname ) => {
+  fileWatch = chokidar.watch( path.dirname( process.env.imageFilePath ), {
+    persistent: true,
+  });
+    
+  fileWatch.on( 'change', async( path, stats ) => {
 
-    if( event !== 'change' ) {
+    if( path !== process.env.imageFilePath ) {
       return;
     }
+
+    if( uploadingLock ) {
+      console.error( 'uploading is still locked');
+      return;
+    }
+
+    uploadingLock = true;
 
     unixTimestamp = Math.round( ( new Date() ).getTime() / 1000 );
 
@@ -109,6 +120,7 @@ async function waitForFile( file ) {
       console.error( 'error trying to read the image and upload it', error );
     }
 
+    uploadingLock = false;
   });
 })();
 
