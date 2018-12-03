@@ -23,6 +23,7 @@ if ( typeof process.env.deviceID === 'undefined' ) {
 var pic = null;
 var fileWatch = null;
 var delay = process.env.cameraDelay || 5;
+console.log({ delay });
 
 var dt = new Date();
 var secInterval = setInterval( () => {
@@ -97,8 +98,9 @@ async function waitForFile( file ) {
     unixTimestamp = Math.round( ( new Date() ).getTime() / 1000 );
 
     try {
+      const fileContents = await fs.readFile( process.env.imageFilePath );
       var form = new FormData();
-      form.append( 'filedata', fs.createReadStream( process.env.imageFilePath ) );
+      form.append( 'filedata', fileContents );
       
       const uploadPath = process.env.uploadURL + [ '/upload', process.env.deviceID, unixTimestamp ].join('/');
 
@@ -132,7 +134,7 @@ async function shutdown() {
 
 // listen for SIGINT and clean up
 process.on('SIGINT', async () => {
-  console.info( '\r\n\r\n', 'SIGINT signal recieved' );
+  console.info( '\r\n\r\nSIGINT signal recieved' );
   shutdown();
 });
 
