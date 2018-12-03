@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon emulate.js",
     "dev2": "cross-env NODE_ENV=development node emulate.js",
+    "dev3": "cross-env NODE_ENV=development TEMP_SENSOR=randomNumber nodemon emulate.js",
     "configure": "node configure.js"
   },
   "bin": {
