@@ -76,7 +76,6 @@ async function waitForFile( file ) {
   while( true ) {
     const exists = await fs.exists( file );
     if( exists ) return true;
-    console.log( 'file does not yet exist, waiting longer' );
     await sleep( 333 );
   }
 }
