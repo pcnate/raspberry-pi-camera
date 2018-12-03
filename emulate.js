@@ -45,6 +45,16 @@ workerProcess.on( 'close', code => {
 });
 
 async function getTemp() {
-  const temps = sensor.readAllF();
+  const temps = readAllF();
   console.log( temps, new Date().toISOString() );
+}
+
+function readAllF() {
+  if (process.env.TEMP_SENSOR === 'randomNumber') {
+    return [
+      { id: '28-0000068b6fe9', t: ( Math.floor( Math.random() * 10000 ) ) / 100 },
+    ];
+  } else {
+    return sensor.readAllF();
+  }
 }
