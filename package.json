@@ -6,7 +6,7 @@
     "dev": "cross-env NODE_ENV=development nodemon emulate.js",
     "configure": "node configure.js",
     "test": "echo \"Notice: no tests are defined, passing\" && exit 0",
-    "preversion": "npm run test && npm run build",
+    "preversion": "npm run test",
     "postversion": "git push && git push --tags && npm publish"
   },
   "bin": {
