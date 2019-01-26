@@ -36,6 +36,6 @@
   },
   "devDependencies": {
     "cross-env": "^5.2.0",
-    "npm-nomaster-commits": "^1.0.5"
+    "npm-nomaster-commits": "*"
   }
 }
