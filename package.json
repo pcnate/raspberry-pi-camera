@@ -1,6 +1,6 @@
 {
   "name": "@pcnate/raspberry-pi-camera",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "nodejs camera application to connect to server via socket.io",
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon emulate.js",
