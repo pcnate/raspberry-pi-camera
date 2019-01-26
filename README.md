@@ -1,5 +1,7 @@
 # raspberry-pi-camera
 [![Build status](https://dev.azure.com/pcnate/raspberry-pi-camera/_apis/build/status/raspberry-pi-camera-CI)](https://dev.azure.com/pcnate/raspberry-pi-camera/_build/latest?definitionId=1)
+![](https://img.shields.io/npm/v/@pcnate/raspberry-pi-camera.svg)
+![](https://img.shields.io/github/license/pcnate/raspberry-pi-camera.svg)
 
 nodejs raspberry pi camera application to upload images to server. It is designed to be setup once and left alone. Additional configuration will be added to the server side.
 
