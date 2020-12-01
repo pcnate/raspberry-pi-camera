@@ -114,7 +114,10 @@ async function waitForFile( file ) {
       const uploadPath = process.env.uploadURL + [ '/upload', process.env.deviceID, unixTimestamp ].join('/');
 
       await form.submit( uploadPath, err => {
-        if ( err ) console.error( 'error submitting form', err );
+        if ( err ) {
+          console.error( 'error submitting form', err );
+          uploadingLock = false;
+        }
       });
     } catch( error ) {
       console.error( 'error trying to read the image and upload it', error );
